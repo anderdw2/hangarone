@@ -1,0 +1,40 @@
+@import '@fontsource/bebas-neue';
+
+:root {
+  --bg:         #080808;
+  --bg2:        #0d1318;
+  --bg3:        #090c0e;
+  --amber:      #c89b3c;
+  --amber-dim:  rgba(200,155,60,0.08);
+  --forest:     #2d5a3d;
+  --forest-dim: rgba(45,90,61,0.25);
+  --gun:        #7d8fa1;
+  --gun-dim:    #3d4e5c;
+  --gun-bright: #afc0ce;
+  --white:      #f0ede8;
+  --muted:      #8a9ba8;
+  --rule:       #3a4d55;
+  --rule-dark:  #111820;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: sans-serif;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+.page-content {
+  width: 1126px;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; font-family: sans-serif; }
