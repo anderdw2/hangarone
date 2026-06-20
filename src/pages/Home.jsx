@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import gunwall from '../assets/gunwall.png'
 import scopeview from '../assets/scopeview1.png'
 import countersales from '../assets/countersales.png'
@@ -222,13 +223,15 @@ export default function Home() {
               <div style={{ fontSize: '13px', color: 'var(--gun)', lineHeight: '1.6' }}>
                 Dedicated expertise for left-handed shooters. Precision optics and custom configurations built around you.
               </div>
-              <div style={{
+              <Link to="/about" style={{
                 marginTop: '16px',
+                display: 'inline-block',
                 fontSize: '10px',
                 letterSpacing: '.1em',
                 color: 'var(--gun-bright)',
                 textTransform: 'uppercase',
-              }}>Learn More →</div>
+                textDecoration: 'none',
+              }}>Learn More →</Link>
             </div>
           </div>
         </div>
