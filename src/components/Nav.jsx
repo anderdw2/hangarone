@@ -74,14 +74,14 @@ export default function Nav() {
         <Link
           to="/contact"
           style={{
-            color: 'var(--forest)',
+            color: active('/contact') ? '#a8c4f4' : 'var(--muted)',
             fontSize: '12px',
             letterSpacing: '.1em',
             padding: '0 28px',
             height: '48px',
             display: 'flex',
             alignItems: 'center',
-            background: 'var(--forest-dim)',
+            background: active('/contact') ? 'var(--logo-blue-dim)' : 'transparent',
             textTransform: 'uppercase',
           }}
         >

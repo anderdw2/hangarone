@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import gunwall from '../assets/gunwall.png'
 import scopeview from '../assets/scopeview1.png'
 import countersales from '../assets/countersales.png'
@@ -120,7 +119,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Two main tiles */}
+      {/* Two main tiles - image on top, text below */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
@@ -129,109 +128,65 @@ export default function Home() {
       }}>
 
         {/* Gun Wall - Custom Rifles */}
-        <div style={{ position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
           <img
             src={gunwall}
             alt="Custom rifle builds"
-            style={{
-              width: '100%',
-              display: 'block',
-              objectFit: 'contain',
-              objectPosition: 'center top',
-            }}
+            style={{ width: '100%', display: 'block' }}
           />
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.97) 28%, rgba(0,0,0,0.0) 60%)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end',
-          }}>
-            <div style={{ padding: '28px' }}>
-              <div style={{
-                background: 'var(--amber)',
-                display: 'inline-block',
-                fontSize: '9px',
-                letterSpacing: '.12em',
-                color: '#080808',
-                padding: '3px 8px',
-                marginBottom: '10px',
-                textTransform: 'uppercase',
-                fontWeight: '700',
-              }}>Custom Rifles</div>
-              <div style={{
-                fontFamily: "'Bebas Neue', sans-serif",
-                fontSize: '28px',
-                letterSpacing: '.06em',
-                color: 'var(--white)',
-                marginBottom: '8px',
-              }}>PRECISION BUILDS</div>
-              <div style={{ fontSize: '13px', color: 'var(--gun)', lineHeight: '1.6' }}>
-                Hand-built custom rifles crafted to your exact specifications. Every build is tailored for accuracy and performance.
-              </div>
-              <div style={{
-                marginTop: '16px',
-                fontSize: '10px',
-                letterSpacing: '.1em',
-                color: 'var(--amber)',
-                textTransform: 'uppercase',
-              }}>View Builds →</div>
+          <div style={{ padding: '28px' }}>
+            <div style={{
+              background: 'var(--amber)',
+              display: 'inline-block',
+              fontSize: '9px',
+              letterSpacing: '.12em',
+              color: '#080808',
+              padding: '3px 8px',
+              marginBottom: '10px',
+              textTransform: 'uppercase',
+              fontWeight: '700',
+            }}>Custom Rifles</div>
+            <div style={{
+              fontFamily: "'Bebas Neue', sans-serif",
+              fontSize: '28px',
+              letterSpacing: '.06em',
+              color: 'var(--white)',
+              marginBottom: '8px',
+            }}>PRECISION BUILDS</div>
+            <div style={{ fontSize: '13px', color: 'var(--gun)', lineHeight: '1.6' }}>
+              Hand-built custom rifles crafted to your exact specifications. Every build is tailored for accuracy and performance.
             </div>
           </div>
         </div>
 
         {/* Scope View - Left Hand Shooter */}
-        <div style={{ position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
           <img
             src={scopeview}
             alt="Left hand shooter scope view"
-            style={{
-              width: '100%',
-              display: 'block',
-              objectFit: 'contain',
-              objectPosition: 'center top',
-            }}
+            style={{ width: '100%', display: 'block' }}
           />
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.97) 28%, rgba(0,0,0,0.0) 60%)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end',
-          }}>
-            <div style={{ padding: '28px' }}>
-              <div style={{
-                background: 'var(--gun)',
-                display: 'inline-block',
-                fontSize: '9px',
-                letterSpacing: '.12em',
-                color: '#080808',
-                padding: '3px 8px',
-                marginBottom: '10px',
-                textTransform: 'uppercase',
-                fontWeight: '700',
-              }}>Left-Hand Specialist</div>
-              <div style={{
-                fontFamily: "'Bebas Neue', sans-serif",
-                fontSize: '28px',
-                letterSpacing: '.06em',
-                color: 'var(--white)',
-                marginBottom: '8px',
-              }}>BUILT FOR SOUTHPAWS</div>
-              <div style={{ fontSize: '13px', color: 'var(--gun)', lineHeight: '1.6' }}>
-                Dedicated expertise for left-handed shooters. Precision optics and custom configurations built around you.
-              </div>
-              <Link to="/about" style={{
-                marginTop: '16px',
-                display: 'inline-block',
-                fontSize: '10px',
-                letterSpacing: '.1em',
-                color: 'var(--gun-bright)',
-                textTransform: 'uppercase',
-                textDecoration: 'none',
-              }}>Learn More →</Link>
+          <div style={{ padding: '28px' }}>
+            <div style={{
+              background: 'var(--gun)',
+              display: 'inline-block',
+              fontSize: '9px',
+              letterSpacing: '.12em',
+              color: '#080808',
+              padding: '3px 8px',
+              marginBottom: '10px',
+              textTransform: 'uppercase',
+              fontWeight: '700',
+            }}>Left-Hand Specialist</div>
+            <div style={{
+              fontFamily: "'Bebas Neue', sans-serif",
+              fontSize: '28px',
+              letterSpacing: '.06em',
+              color: 'var(--white)',
+              marginBottom: '8px',
+            }}>BUILT FOR SOUTHPAWS</div>
+            <div style={{ fontSize: '13px', color: 'var(--gun)', lineHeight: '1.6' }}>
+              Dedicated expertise for left-handed shooters. Precision optics and custom configurations built around you.
             </div>
           </div>
         </div>

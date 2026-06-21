@@ -51,68 +51,21 @@ export default function About() {
         </div>
       </div>
 
-      {/* Three image tiles */}
+      {/* Row 1 - Gunlover image left, Who We Are text right */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr',
+        gridTemplateColumns: '1fr 1fr',
         gap: '2px',
-        background: 'var(--rule)',
+        background: 'var(--bg)',
       }}>
-
-        {/* Gunlover tile */}
-        <div style={{ overflow: 'hidden' }}>
+        <div style={{ overflow: 'hidden', background: 'var(--bg)' }}>
           <img
             src={gunlover}
             alt="Owner with guns"
             style={{ width: '100%', display: 'block' }}
           />
         </div>
-
-        {/* Mornhunt tile */}
-        <div style={{ overflow: 'hidden' }}>
-          <img
-            src={mornhunt}
-            alt="Morning hunt"
-            style={{ width: '100%', display: 'block' }}
-          />
-        </div>
-
-        {/* Patriot tile with overlay text */}
-        <div style={{ position: 'relative', overflow: 'hidden' }}>
-          <img
-            src={patriot}
-            alt="Patriot 7PRC build"
-            style={{ width: '100%', display: 'block' }}
-          />
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.92) 30%, rgba(0,0,0,0.0) 60%)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end',
-            padding: '24px',
-          }}>
-            <div style={{
-              fontFamily: "'Bebas Neue', sans-serif",
-              fontSize: '22px',
-              letterSpacing: '.06em',
-              color: 'var(--white)',
-              lineHeight: '1.2',
-            }}>BUILT ON EXPERIENCE.<br />DRIVEN BY PASSION.</div>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Who we are */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '2px',
-        background: 'var(--rule)',
-      }}>
-        <div style={{ background: 'var(--bg)', padding: '56px 48px' }}>
+        <div style={{ background: 'var(--bg)', padding: '56px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div style={{
             fontSize: '9px',
             letterSpacing: '.14em',
@@ -134,8 +87,16 @@ export default function About() {
             New to gun ownership? No problem. We'll walk you through everything at your own pace, with zero pressure and straight answers.
           </p>
         </div>
+      </div>
 
-        <div style={{ background: 'var(--bg)', padding: '56px 48px', borderLeft: '1px solid var(--rule)' }}>
+      {/* Row 2 - Southpaw text left, mornhunt image right */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '2px',
+        background: 'var(--bg)',
+      }}>
+        <div style={{ background: 'var(--bg)', padding: '56px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div style={{
             fontSize: '9px',
             letterSpacing: '.14em',
@@ -155,6 +116,49 @@ export default function About() {
           </p>
           <p style={{ fontSize: '14px', color: 'var(--gun)', lineHeight: '1.8' }}>
             Beyond sales, we build. Custom rifle builds crafted to your exact specifications, and we partner with an exceptional Cerakote artist who treats every finish like a work of art — as you'll see in our Portfolio.
+          </p>
+        </div>
+        <div style={{ overflow: 'hidden', background: 'var(--bg)' }}>
+          <img
+            src={mornhunt}
+            alt="Morning hunt"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        </div>
+      </div>
+
+      {/* Row 3 - Patriot image left, text right */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '2px',
+        background: 'var(--bg)',
+      }}>
+        <div style={{ overflow: 'hidden', background: 'var(--bg)' }}>
+          <img
+            src={patriot}
+            alt="Patriot 7PRC build"
+            style={{ width: '100%', display: 'block' }}
+          />
+        </div>
+        <div style={{ background: 'var(--bg)', padding: '56px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{
+            fontSize: '9px',
+            letterSpacing: '.14em',
+            color: 'var(--amber)',
+            textTransform: 'uppercase',
+            marginBottom: '12px',
+          }}>Custom Builds</div>
+          <h2 style={{
+            fontFamily: "'Bebas Neue', sans-serif",
+            fontSize: '42px',
+            letterSpacing: '.06em',
+            color: 'var(--white)',
+            marginBottom: '12px',
+            lineHeight: '1.1',
+          }}>BUILT ON EXPERIENCE.<br />DRIVEN BY PASSION.</h2>
+          <p style={{ fontSize: '14px', color: 'var(--gun)', lineHeight: '1.7' }}>
+            Every build is a reflection of the shooter behind it. We take the time to understand what you need and deliver a rifle that performs.
           </p>
         </div>
       </div>
