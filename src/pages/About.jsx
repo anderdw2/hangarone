@@ -196,12 +196,12 @@ export default function About() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ fontSize: '13px', color: 'var(--gun-bright)' }}>Dave Anderson</div>
-          <a href="mailto:dave.anderson@hangaroneprecision.com" style={{
+          <a href="mailto:danderson@hangaroneprecision.com" style={{
             fontSize: '13px',
             color: 'var(--amber)',
             textDecoration: 'none',
             letterSpacing: '.02em',
-          }}>dave.anderson@hangaroneprecision.com</a>
+          }}>danderson@hangaroneprecision.com</a>
           <a href="tel:7178600163" style={{
             fontSize: '13px',
             color: 'var(--amber)',

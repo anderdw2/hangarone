@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const CONTACT_EMAIL = 'dave.anderson@hangaroneprecision.com'
+const CONTACT_EMAIL = 'danderson@hangaroneprecision.com'
 
 const inquiryLabels = {
   'purchase-firearm': 'Purchase a Firearm',
@@ -29,11 +29,10 @@ export default function Contact() {
 
     try {
       const inquiryLabel = inquiryLabels[form.inquiryType] || 'Contact Form'
-      const response = await fetch(`https://formsubmit.co/ajax/${CONTACT_EMAIL}`, {
+      const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'application/json',
         },
         body: JSON.stringify({
           name: form.name,
@@ -41,9 +40,6 @@ export default function Contact() {
           phone: form.phone,
           inquiryType: inquiryLabel,
           message: form.message,
-          _subject: `Hangar One Precision: ${inquiryLabel}`,
-          _template: 'table',
-          _captcha: 'false',
         }),
       })
 

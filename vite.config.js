@@ -10,5 +10,12 @@ export default defineConfig({
       usePolling: true,
       interval: 100,
     },
+    proxy: {
+      '/api/contact': {
+        target: 'http://127.0.0.1:5001/hangar-one-precision/us-central1/sendContactEmail',
+        changeOrigin: true,
+        rewrite: () => '',
+      },
+    },
   },
 })
