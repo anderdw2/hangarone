@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { db } from '../lib/firebase'
 import { collection, getDocs } from 'firebase/firestore'
 
-const FUNCTION_URL = 'https://getaccessories-201160203866.us-central1.run.app'
+const FUNCTION_URL = 'https://getproducts-201160203866.us-central1.run.app'
 
 export default function Shop() {
   const [tab, setTab] = useState('inventory')
@@ -11,8 +11,12 @@ export default function Shop() {
   const [customLoading, setCustomLoading] = useState(true)
 
   const [items, setItems] = useState([])
+  const [parentCategories, setParentCategories] = useState([])
+  const [categoryTree, setCategoryTree] = useState({})
   const [pagination, setPagination] = useState(null)
   const [page, setPage] = useState(1)
+  const [parent, setParent] = useState('')
+  const [subcategory, setSubcategory] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
@@ -29,14 +33,31 @@ export default function Shop() {
     }
   }
 
-  const fetchCSCItems = async (p = 1) => {
+  const fetchProducts = async (p = 1) => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${FUNCTION_URL}?page=${p}&per_page=24`)
+      const params = new URLSearchParams({ page: p, per_page: '24' })
+      if (parent) params.set('parent', parent)
+      if (subcategory) params.set('subcategory', subcategory)
+      if (search.trim()) params.set('search', search.trim())
+
+      const res = await fetch(`${FUNCTION_URL}?${params}`)
       const data = await res.json()
+
+      if (!res.ok || data.error) {
+        const msg = typeof data.error === 'string'
+          ? data.error
+          : data.error?.message || 'Failed to load products.'
+        setError(msg)
+        setItems([])
+        return
+      }
+
       setItems(data.items || [])
       setPagination(data.pagination || null)
+      if (data.parent_categories?.length) setParentCategories(data.parent_categories)
+      if (data.category_tree) setCategoryTree(data.category_tree)
     } catch (err) {
       setError('Failed to load products. Please try again.')
     } finally {
@@ -50,13 +71,22 @@ export default function Shop() {
 
   useEffect(() => {
     if (tab === 'products') {
-      fetchCSCItems(page)
+      fetchProducts(page)
     }
-  }, [tab, page])
+  }, [tab, page, parent, subcategory, search])
 
-  const filteredCSC = items.filter(item =>
-    item.name.toLowerCase().includes(search.toLowerCase())
-  )
+  const subcategories = parent ? (categoryTree[parent] || []) : []
+
+  const selectParent = (value) => {
+    setParent(value)
+    setSubcategory('')
+    setPage(1)
+  }
+
+  const selectSubcategory = (value) => {
+    setSubcategory(value)
+    setPage(1)
+  }
 
   const tabStyle = (t) => ({
     padding: '14px 32px',
@@ -70,6 +100,22 @@ export default function Shop() {
     color: tab === t ? 'var(--white)' : 'var(--muted)',
     fontFamily: 'sans-serif',
   })
+
+  const selectStyle = {
+    background: 'var(--bg2)',
+    border: '1px solid var(--rule)',
+    color: 'var(--white)',
+    padding: '10px 16px',
+    fontSize: '13px',
+    outline: 'none',
+    fontFamily: 'sans-serif',
+    minWidth: '220px',
+  }
+
+  const formatPrice = (price) => {
+    const n = parseFloat(price)
+    return Number.isFinite(n) ? n.toFixed(2) : '0.00'
+  }
 
   return (
     <div style={{ color: 'var(--white)' }}>
@@ -131,11 +177,7 @@ export default function Shop() {
             </div>
           )}
           {!customLoading && customItems.length > 0 && (
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '2px',
-            }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px' }}>
               {customItems.map(item => (
                 <div key={item.id} style={{
                   background: 'var(--bg2)',
@@ -175,7 +217,7 @@ export default function Shop() {
                       fontSize: '24px',
                       letterSpacing: '.04em',
                       color: 'var(--amber)',
-                    }}>${item.price?.toFixed(2)}</div>
+                    }}>${formatPrice(item.price)}</div>
                     <a href="/contact" style={{
                       fontSize: '10px',
                       letterSpacing: '.1em',
@@ -208,7 +250,7 @@ export default function Shop() {
               type="text"
               placeholder="Search products..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => { setSearch(e.target.value); setPage(1) }}
               style={{
                 background: 'var(--bg2)',
                 border: '1px solid var(--rule)',
@@ -226,6 +268,56 @@ export default function Shop() {
             )}
           </div>
 
+          {parentCategories.length > 0 && (
+            <div style={{
+              padding: '20px 48px',
+              borderBottom: '1px solid var(--rule)',
+              display: 'flex',
+              gap: '16px',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+            }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{
+                  fontSize: '9px',
+                  letterSpacing: '.12em',
+                  color: 'var(--muted)',
+                  textTransform: 'uppercase',
+                }}>Department</span>
+                <select
+                  value={parent}
+                  onChange={e => selectParent(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="">All Departments</option>
+                  {parentCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </label>
+              {parent && subcategories.length > 0 && (
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <span style={{
+                    fontSize: '9px',
+                    letterSpacing: '.12em',
+                    color: 'var(--muted)',
+                    textTransform: 'uppercase',
+                  }}>Type</span>
+                  <select
+                    value={subcategory}
+                    onChange={e => selectSubcategory(e.target.value)}
+                    style={selectStyle}
+                  >
+                    <option value="">All in {parent}</option>
+                    {subcategories.map(sub => (
+                      <option key={sub} value={sub}>{sub}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </div>
+          )}
+
           <div style={{ padding: '32px 48px' }}>
             {loading && (
               <div style={{ color: 'var(--muted)', fontSize: '14px', padding: '48px 0', textAlign: 'center' }}>
@@ -237,14 +329,15 @@ export default function Shop() {
                 {error}
               </div>
             )}
-            {!loading && !error && (
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '2px',
-              }}>
-                {filteredCSC.map(item => (
-                  <div key={item.cssi_id} style={{
+            {!loading && !error && items.length === 0 && (
+              <div style={{ color: 'var(--muted)', fontSize: '14px', padding: '48px 0', textAlign: 'center' }}>
+                No products found{parent ? ` in ${parent}` : ''}{subcategory ? ` › ${subcategory}` : ''}.
+              </div>
+            )}
+            {!loading && !error && items.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px' }}>
+                {items.map(item => (
+                  <div key={item.sku} style={{
                     background: 'var(--bg2)',
                     padding: '24px',
                     display: 'flex',
@@ -254,19 +347,34 @@ export default function Shop() {
                     flexGrow: 1,
                     maxWidth: '400px',
                   }}>
+                    {item.image && (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        style={{ width: '100%', maxHeight: '160px', objectFit: 'contain', marginBottom: '4px' }}
+                      />
+                    )}
                     <div style={{
                       fontSize: '9px',
                       letterSpacing: '.12em',
-                      color: item.in_stock_flag ? '#a8d4b4' : 'var(--muted)',
+                      color: 'var(--gun)',
                       textTransform: 'uppercase',
                     }}>
-                      {item.in_stock_flag ? `In Stock (${item.inventory})` : 'Out of Stock'}
+                      {item.sub_category || item.parent_category}
+                    </div>
+                    <div style={{
+                      fontSize: '9px',
+                      letterSpacing: '.12em',
+                      color: item.stock > 0 ? '#a8d4b4' : 'var(--muted)',
+                      textTransform: 'uppercase',
+                    }}>
+                      {item.stock > 0 ? `In Stock (${item.stock})` : 'Out of Stock'}
                     </div>
                     <div style={{ fontSize: '13px', color: 'var(--white)', lineHeight: '1.4', fontWeight: '500', flexGrow: 1 }}>
                       {item.name}
                     </div>
                     <div style={{ fontSize: '11px', color: 'var(--muted)', letterSpacing: '.06em' }}>
-                      SKU: {item.cssi_id}
+                      SKU: {item.sku}
                     </div>
                     <div style={{
                       display: 'flex',
@@ -281,7 +389,7 @@ export default function Shop() {
                         fontSize: '22px',
                         letterSpacing: '.04em',
                         color: 'var(--amber)',
-                      }}>${item.custom_price?.toFixed(2)}</div>
+                      }}>${formatPrice(item.price)}</div>
                       <a href="/contact" style={{
                         fontSize: '10px',
                         letterSpacing: '.1em',
@@ -297,7 +405,7 @@ export default function Shop() {
               </div>
             )}
 
-            {!loading && pagination && (
+            {!loading && pagination && pagination.page_count > 1 && (
               <div style={{
                 display: 'flex',
                 justifyContent: 'center',

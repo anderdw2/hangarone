@@ -8,7 +8,8 @@ const cscToken = defineSecret("CSC_TOKEN");
 const BASE_URL = "https://api.chattanoogashooting.com/rest/v6";
 
 const CACHE_TTL_MS = 4 * 60 * 60 * 1000;
-const CACHE_PATH = "cache/csc-products.json";
+const CACHE_PATH = "cache/csc-products-v2.json";
+const CACHE_V1_PATH = "cache/csc-products.json";
 const META_DOC = "csc_product_cache";
 const REFRESH_LOCK_MS = 10 * 60 * 1000;
 
@@ -48,17 +49,101 @@ const parseCSVLine = (line) => {
   return result.map((v) => v.trim());
 };
 
+const parseCSVRecords = (text) => {
+  const records = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (char === "\"") {
+      if (inQuotes && text[i + 1] === "\"") {
+        current += "\"";
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && text[i + 1] === "\n") {
+        i++;
+      }
+      if (current.trim()) {
+        records.push(current);
+      }
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  if (current.trim()) {
+    records.push(current);
+  }
+  return records;
+};
+
 const parseCSV = (text) => {
-  const lines = text.trim().split(/\r?\n/);
-  const headers = parseCSVLine(lines[0]).map((h) => h.trim());
-  return lines.slice(1).filter(Boolean).map((line) => {
-    const values = parseCSVLine(line);
+  const records = parseCSVRecords(text.trim());
+  if (!records.length) {
+    return [];
+  }
+  const headers = parseCSVLine(records[0]).map((h) => h.trim());
+  return records.slice(1).map((record) => {
+    const values = parseCSVLine(record);
     const obj = {};
     headers.forEach((h, i) => {
       obj[h] = values[i] || "";
     });
     return obj;
   });
+};
+
+const isValidCategoryName = (name) => {
+  if (!name || !/[a-zA-Z]/.test(name)) {
+    return false;
+  }
+  if (/^\d+(\.\d+)?$/.test(name.trim())) {
+    return false;
+  }
+  return true;
+};
+
+const parseCategoryPath = (raw) => {
+  const parts = (raw || "")
+      .split(/[/|]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  if (!parts.length) {
+    return {parent: "", sub: "", full: ""};
+  }
+  if (parts.length === 1) {
+    return {parent: parts[0], sub: "", full: parts[0]};
+  }
+  return {
+    parent: parts[0],
+    sub: parts.slice(1).join(" / "),
+    full: parts.join(" / "),
+  };
+};
+
+const buildCategoryTree = (items) => {
+  const tree = {};
+  for (const item of items) {
+    const parent = item.parent_category;
+    const sub = item.sub_category;
+    if (!parent) {
+      continue;
+    }
+    if (!tree[parent]) {
+      tree[parent] = new Set();
+    }
+    if (sub) {
+      tree[parent].add(sub);
+    }
+  }
+  const result = {};
+  for (const [parent, subs] of Object.entries(tree)) {
+    result[parent] = [...subs].sort();
+  }
+  return result;
 };
 
 const getPrice = (item) => {
@@ -71,17 +156,25 @@ const getPrice = (item) => {
   return price.toFixed(2);
 };
 
-const mapItem = (item) => ({
-  sku: item["SKU"],
-  name: item["Item Name"] || item["Web Item Name"] || item["Name"] || "",
-  description: item["Web Item Description"] || "",
-  price: getPrice(item),
-  image: item["Image Location"] || "",
-  category: item["Category"] || "",
-  manufacturer: item["Manufacturer"] || "",
-  stock: parseInt(item["Quantity In Stock"] || item["Stock"] || "0"),
-  drop_ship: item["Drop Ship Flag"] === "1",
-});
+const mapItem = (item) => {
+  const {parent, sub, full} = parseCategoryPath(item["Category"]);
+  if (!isValidCategoryName(parent)) {
+    return null;
+  }
+  return {
+    sku: item["SKU"],
+    name: item["Item Name"] || item["Web Item Name"] || item["Name"] || "",
+    description: item["Web Item Description"] || "",
+    price: getPrice(item),
+    image: item["Image Location"] || "",
+    category: full,
+    parent_category: parent,
+    sub_category: sub,
+    manufacturer: item["Manufacturer"] || "",
+    stock: parseInt(item["Quantity In Stock"] || item["Stock"] || "0"),
+    drop_ship: item["Drop Ship Flag"] === "1",
+  };
+};
 
 const readGcsCache = async () => {
   const bucket = initAdmin().storage().bucket();
@@ -104,6 +197,37 @@ const writeGcsCache = async (items) => {
     contentType: "application/json",
     resumable: false,
   });
+};
+
+const migrateV1Item = (item) => {
+  const {parent, sub, full} = parseCategoryPath(item.category || "");
+  if (!isValidCategoryName(parent)) {
+    return null;
+  }
+  return {
+    ...item,
+    category: full,
+    parent_category: parent,
+    sub_category: sub,
+  };
+};
+
+const tryMigrateV1Cache = async () => {
+  const bucket = initAdmin().storage().bucket();
+  const file = bucket.file(CACHE_V1_PATH);
+  const [exists] = await file.exists();
+  if (!exists) {
+    return null;
+  }
+  const [contents] = await file.download();
+  const v1 = JSON.parse(contents.toString());
+  const items = (v1.items || []).map(migrateV1Item).filter(Boolean);
+  if (!items.length) {
+    return null;
+  }
+  await writeGcsCache(items);
+  console.log(`Migrated v2 cache from v1 (${items.length} items)`);
+  return items;
 };
 
 const getMetaRef = () =>
@@ -176,7 +300,8 @@ const fetchFromCsc = async (sid, token) => {
         const qty = item["Quantity In Stock"] || item["Stock"] || "0";
         return parseInt(qty) > 0;
       })
-      .map(mapItem);
+      .map(mapItem)
+      .filter(Boolean);
 };
 
 const getCatalog = async (sid, token) => {
@@ -187,6 +312,13 @@ const getCatalog = async (sid, token) => {
   if (cached?.items?.length && cacheAge < CACHE_TTL_MS) {
     console.log("Serving products from GCS cache");
     return cached.items;
+  }
+
+  if (!cached?.items?.length) {
+    const migrated = await tryMigrateV1Cache();
+    if (migrated?.length) {
+      return migrated;
+    }
   }
 
   const lockAcquired = await tryAcquireRefreshLock();
@@ -211,6 +343,11 @@ const getCatalog = async (sid, token) => {
       return cached.items;
     }
     if (error.status === 429) {
+      const migrated = await tryMigrateV1Cache();
+      if (migrated?.length) {
+        console.warn("CSC rate limited — serving migrated v1 cache");
+        return migrated;
+      }
       let errorBody = error.body;
       try {
         errorBody = JSON.parse(error.body);
@@ -243,19 +380,39 @@ exports.getProducts = onRequest(
       try {
         const sid = cscSid.value();
         const token = cscToken.value();
-        const allItems = await getCatalog(sid, token);
+        let allItems;
+        if (req.query.rebuild === "migrate") {
+          allItems = await tryMigrateV1Cache();
+          if (!allItems?.length) {
+            res.status(404).json({
+              error: "v1 migration failed — no v1 cache or no valid items",
+            });
+            return;
+          }
+        } else {
+          allItems = await getCatalog(sid, token);
+        }
 
         const page = parseInt(req.query.page) || 1;
         const perPage = parseInt(req.query.per_page) || 24;
-        const category = req.query.category || "";
+        const parent = req.query.parent || "";
+        const subcategory = req.query.subcategory || "";
         const search = req.query.search || "";
         const manufacturer = req.query.manufacturer || "";
 
         let filtered = allItems;
 
-        if (category) {
+        if (parent) {
           filtered = filtered.filter(
-              (i) => i.category.toLowerCase() === category.toLowerCase(),
+              (i) =>
+                i.parent_category.toLowerCase() === parent.toLowerCase(),
+          );
+        }
+
+        if (subcategory) {
+          filtered = filtered.filter(
+              (i) =>
+                i.sub_category.toLowerCase() === subcategory.toLowerCase(),
           );
         }
 
@@ -277,16 +434,16 @@ exports.getProducts = onRequest(
         const start = (page - 1) * perPage;
         const pageItems = filtered.slice(start, start + perPage);
 
-        const categories = [
-          ...new Set(allItems.map((i) => i.category).filter(Boolean)),
-        ].sort();
+        const categoryTree = buildCategoryTree(allItems);
+        const parentCategories = Object.keys(categoryTree).sort();
         const manufacturers = [
           ...new Set(allItems.map((i) => i.manufacturer).filter(Boolean)),
         ].sort();
 
         res.status(200).json({
           pagination: {page, per_page: perPage, page_count: pageCount, total},
-          categories,
+          parent_categories: parentCategories,
+          category_tree: categoryTree,
           manufacturers,
           items: pageItems,
         });
