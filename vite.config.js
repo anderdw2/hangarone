@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
+    headers: {
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.emailjs.com; connect-src 'self' https://api.emailjs.com https://*.firebaseio.com https://*.googleapis.com https://*.run.app wss://*.firebaseio.com; img-src 'self' data: https://*.firebasestorage.app blob:; style-src 'self' 'unsafe-inline';",
+    },
     watch: {
-      // Native file events can miss saves from some editors on macOS
       usePolling: true,
       interval: 100,
     },

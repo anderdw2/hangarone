@@ -1,6 +1,7 @@
 import gunwall from '../assets/gunwall.png'
 import scopeview from '../assets/scopeview1.png'
 import countersales from '../assets/countersales.png'
+import variousproducts from '../assets/variousproducts.png'
 
 export default function Home() {
   return (
@@ -189,6 +190,80 @@ export default function Home() {
               Dedicated expertise for left-handed shooters. Precision optics and custom configurations built around you.
             </div>
           </div>
+        </div>
+
+      </div>
+
+      {/* Supplier Section - Full Width */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '2px',
+        background: 'var(--rule)',
+      }}>
+
+        {/* Text left */}
+        <div style={{
+          background: 'var(--bg)',
+          padding: '56px 48px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}>
+          <div style={{
+            fontSize: '9px',
+            letterSpacing: '.14em',
+            color: 'var(--amber)',
+            textTransform: 'uppercase',
+            marginBottom: '12px',
+          }}>Our Suppliers</div>
+          <div style={{
+            fontFamily: "'Bebas Neue', sans-serif",
+            fontSize: '36px',
+            letterSpacing: '.06em',
+            color: 'var(--white)',
+            marginBottom: '16px',
+            lineHeight: '1.1',
+          }}>MORE BRANDS. BETTER PRICES.</div>
+          <p style={{
+            fontSize: '14px',
+            color: 'var(--gun)',
+            lineHeight: '1.8',
+            marginBottom: '28px',
+          }}>
+            We work with a multitude of suppliers so we can source nearly anything you're looking for. Because we operate with low overhead as a home-based FFL, we pass those savings directly to you — giving you access to a wide range of brands at prices that larger retailers simply can't match.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <a href="/shop" style={{
+              display: 'inline-block',
+              background: 'var(--forest)',
+              color: '#a8d4b4',
+              fontSize: '11px',
+              letterSpacing: '.1em',
+              padding: '12px 24px',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+            }}>Browse the Shop</a>
+            <a href="/contact" style={{
+              display: 'inline-block',
+              border: '1px solid var(--rule)',
+              color: 'var(--gun)',
+              fontSize: '11px',
+              letterSpacing: '.1em',
+              padding: '12px 24px',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+            }}>Ask About an Item</a>
+          </div>
+        </div>
+
+        {/* Image right */}
+        <div style={{ overflow: 'hidden' }}>
+          <img
+            src={variousproducts}
+            alt="Various firearms and products"
+            style={{ width: '100%', display: 'block', height: '100%', objectFit: 'cover' }}
+          />
         </div>
 
       </div>

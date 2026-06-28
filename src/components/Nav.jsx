@@ -50,6 +50,7 @@ export default function Nav() {
         {[
           { label: 'Home', to: '/' },
           { label: 'Shop', to: '/shop' },
+          { label: 'Accessories', to: '/accessories' },
           { label: 'Portfolio', to: '/portfolio' },
           { label: 'About', to: '/about' },
         ].map(({ label, to }) => (

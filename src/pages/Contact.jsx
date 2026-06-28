@@ -1,54 +1,39 @@
 import { useState } from 'react'
+import emailjs from '@emailjs/browser'
 
-const CONTACT_EMAIL = 'danderson@hangaroneprecision.com'
-
-const inquiryLabels = {
-  'purchase-firearm': 'Purchase a Firearm',
-  'purchase-accessory': 'Purchase an Accessory',
-  'custom-build': 'Custom Build',
-  general: 'General Question',
-}
+const SERVICE_ID = 'service_bzytexi'
+const TEMPLATE_ID = 'template_sp1rqsa'
+const PUBLIC_KEY = 'ZfdkljRVv91BQhqBJ'
 
 export default function Contact() {
   const [form, setForm] = useState({
-    name: '',
-    email: '',
+    from_name: '',
+    from_email: '',
     phone: '',
-    inquiryType: '',
+    inquiry_type: '',
     message: '',
   })
-  const [status, setStatus] = useState('idle') // idle | sending | success | error
+  const [sending, setSending] = useState(false)
+  const [success, setSuccess] = useState('')
+  const [error, setError] = useState('')
 
-  const updateField = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }))
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setStatus('sending')
-
+  const handleSubmit = async () => {
+    if (!form.from_name || !form.from_email || !form.inquiry_type || !form.message) {
+      setError('Please fill in all required fields.')
+      return
+    }
+    setSending(true)
+    setError('')
+    setSuccess('')
     try {
-      const inquiryLabel = inquiryLabels[form.inquiryType] || 'Contact Form'
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          inquiryType: inquiryLabel,
-          message: form.message,
-        }),
-      })
-
-      if (!response.ok) throw new Error('Send failed')
-
-      setStatus('success')
-      setForm({ name: '', email: '', phone: '', inquiryType: '', message: '' })
-    } catch {
-      setStatus('error')
+      await emailjs.send(SERVICE_ID, TEMPLATE_ID, form, PUBLIC_KEY)
+      setSuccess('Message sent! We\'ll get back to you shortly.')
+      setForm({ from_name: '', from_email: '', phone: '', inquiry_type: '', message: '' })
+    } catch (err) {
+      setError('Failed to send message. Please try again or email us directly.')
+      console.error(err)
+    } finally {
+      setSending(false)
     }
   }
 
@@ -61,6 +46,7 @@ export default function Contact() {
     fontSize: '14px',
     outline: 'none',
     boxSizing: 'border-box',
+    fontFamily: 'sans-serif',
   }
 
   const labelStyle = {
@@ -109,149 +95,99 @@ export default function Contact() {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         gap: '2px',
-        background: 'var(--bg)',
+        background: 'var(--rule)',
       }}>
 
         {/* Form */}
         <div style={{ background: 'var(--bg)', padding: '56px 48px' }}>
-          {status === 'success' ? (
-            <div>
-              <div style={{
-                fontSize: '9px',
-                letterSpacing: '.14em',
-                color: 'var(--amber)',
-                textTransform: 'uppercase',
-                marginBottom: '12px',
-              }}>Message Sent</div>
-              <h2 style={{
-                fontFamily: "'Bebas Neue', sans-serif",
-                fontSize: '36px',
-                letterSpacing: '.06em',
-                color: 'var(--white)',
-                marginBottom: '16px',
-              }}>WE GOT IT.</h2>
-              <p style={{ fontSize: '14px', color: 'var(--gun)', lineHeight: '1.7', marginBottom: '24px' }}>
-                Thanks for reaching out. We'll get back to you at the email you provided as soon as possible.
-              </p>
-              <button
-                type="button"
-                onClick={() => setStatus('idle')}
-                style={{
-                  background: 'var(--forest)',
-                  color: '#a8d4b4',
-                  fontSize: '11px',
-                  letterSpacing: '.1em',
-                  padding: '14px 36px',
-                  textTransform: 'uppercase',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'sans-serif',
-                }}
-              >
-                Send Another Message
-              </button>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={labelStyle}>Name *</label>
+            <input
+              type="text"
+              placeholder="Your full name"
+              value={form.from_name}
+              onChange={e => setForm({ ...form, from_name: e.target.value })}
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={labelStyle}>Email *</label>
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={form.from_email}
+              onChange={e => setForm({ ...form, from_email: e.target.value })}
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={labelStyle}>Phone</label>
+            <input
+              type="tel"
+              placeholder="Your phone number"
+              value={form.phone}
+              onChange={e => setForm({ ...form, phone: e.target.value })}
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={labelStyle}>Inquiry Type *</label>
+            <select
+              value={form.inquiry_type}
+              onChange={e => setForm({ ...form, inquiry_type: e.target.value })}
+              style={{ ...inputStyle, appearance: 'none' }}
+            >
+              <option value="">Select an inquiry type...</option>
+              <option value="Purchase a Firearm">Purchase a Firearm</option>
+              <option value="Purchase an Accessory">Purchase an Accessory</option>
+              <option value="Custom Build">Custom Build</option>
+              <option value="General Question">General Question</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: '32px' }}>
+            <label style={labelStyle}>Message *</label>
+            <textarea
+              placeholder="Tell us what you're looking for..."
+              rows={6}
+              value={form.message}
+              onChange={e => setForm({ ...form, message: e.target.value })}
+              style={{ ...inputStyle, resize: 'vertical' }}
+            />
+          </div>
+
+          {error && (
+            <div style={{ color: 'var(--amber)', fontSize: '13px', marginBottom: '16px' }}>
+              {error}
             </div>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '24px' }}>
-                <label htmlFor="contact-name" style={labelStyle}>Name</label>
-                <input
-                  id="contact-name"
-                  name="name"
-                  type="text"
-                  required
-                  value={form.name}
-                  onChange={updateField('name')}
-                  placeholder="Your full name"
-                  style={inputStyle}
-                />
-              </div>
-
-              <div style={{ marginBottom: '24px' }}>
-                <label htmlFor="contact-email" style={labelStyle}>Email</label>
-                <input
-                  id="contact-email"
-                  name="email"
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={updateField('email')}
-                  placeholder="your@email.com"
-                  style={inputStyle}
-                />
-              </div>
-
-              <div style={{ marginBottom: '24px' }}>
-                <label htmlFor="contact-phone" style={labelStyle}>Phone</label>
-                <input
-                  id="contact-phone"
-                  name="phone"
-                  type="tel"
-                  value={form.phone}
-                  onChange={updateField('phone')}
-                  placeholder="Your phone number"
-                  style={inputStyle}
-                />
-              </div>
-
-              <div style={{ marginBottom: '24px' }}>
-                <label htmlFor="contact-inquiry" style={labelStyle}>Inquiry Type</label>
-                <select
-                  id="contact-inquiry"
-                  name="inquiryType"
-                  required
-                  value={form.inquiryType}
-                  onChange={updateField('inquiryType')}
-                  style={{ ...inputStyle, appearance: 'none' }}
-                >
-                  <option value="" style={{ background: 'var(--bg2)' }}>Select an inquiry type...</option>
-                  <option value="purchase-firearm" style={{ background: 'var(--bg2)' }}>Purchase a Firearm</option>
-                  <option value="purchase-accessory" style={{ background: 'var(--bg2)' }}>Purchase an Accessory</option>
-                  <option value="custom-build" style={{ background: 'var(--bg2)' }}>Custom Build</option>
-                  <option value="general" style={{ background: 'var(--bg2)' }}>General Question</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: '32px' }}>
-                <label htmlFor="contact-message" style={labelStyle}>Message</label>
-                <textarea
-                  id="contact-message"
-                  name="message"
-                  required
-                  value={form.message}
-                  onChange={updateField('message')}
-                  placeholder="Tell us what you're looking for..."
-                  rows={6}
-                  style={{ ...inputStyle, resize: 'vertical', fontFamily: 'sans-serif' }}
-                />
-              </div>
-
-              {status === 'error' && (
-                <p style={{ fontSize: '13px', color: '#e88', marginBottom: '16px' }}>
-                  Something went wrong. Please try again or email us directly.
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={status === 'sending'}
-                style={{
-                  background: 'var(--forest)',
-                  color: '#a8d4b4',
-                  fontSize: '11px',
-                  letterSpacing: '.1em',
-                  padding: '14px 36px',
-                  textTransform: 'uppercase',
-                  border: 'none',
-                  cursor: status === 'sending' ? 'wait' : 'pointer',
-                  fontFamily: 'sans-serif',
-                  opacity: status === 'sending' ? 0.7 : 1,
-                }}
-              >
-                {status === 'sending' ? 'Sending...' : 'Send Message'}
-              </button>
-            </form>
           )}
+          {success && (
+            <div style={{ color: '#a8d4b4', fontSize: '13px', marginBottom: '16px' }}>
+              {success}
+            </div>
+          )}
+
+          <button
+            onClick={handleSubmit}
+            disabled={sending}
+            style={{
+              background: sending ? 'var(--gun-dim)' : 'var(--forest)',
+              color: '#a8d4b4',
+              fontSize: '11px',
+              letterSpacing: '.1em',
+              padding: '14px 36px',
+              textTransform: 'uppercase',
+              border: 'none',
+              cursor: sending ? 'not-allowed' : 'pointer',
+              fontFamily: 'sans-serif',
+            }}
+          >
+            {sending ? 'Sending...' : 'Send Message'}
+          </button>
         </div>
 
         {/* Contact Info */}
@@ -272,21 +208,21 @@ export default function Contact() {
           }}>REACH OUT DIRECTLY</h2>
 
           <div style={{ marginBottom: '32px' }}>
-            <div style={labelStyle}>Owner</div>
+            <div style={{ fontSize: '10px', letterSpacing: '.1em', color: 'var(--gun)', textTransform: 'uppercase', marginBottom: '8px' }}>Owner</div>
             <div style={{ fontSize: '16px', color: 'var(--white)' }}>Dave Anderson</div>
           </div>
 
           <div style={{ marginBottom: '32px' }}>
-            <div style={labelStyle}>Email</div>
-            <a href={`mailto:${CONTACT_EMAIL}`} style={{
+            <div style={{ fontSize: '10px', letterSpacing: '.1em', color: 'var(--gun)', textTransform: 'uppercase', marginBottom: '8px' }}>Email</div>
+            <a href="mailto:danderson@hangaroneprecision.com" style={{
               fontSize: '15px',
               color: 'var(--amber)',
               textDecoration: 'none',
-            }}>{CONTACT_EMAIL}</a>
+            }}>danderson@hangaroneprecision.com</a>
           </div>
 
           <div style={{ marginBottom: '48px' }}>
-            <div style={labelStyle}>Phone</div>
+            <div style={{ fontSize: '10px', letterSpacing: '.1em', color: 'var(--gun)', textTransform: 'uppercase', marginBottom: '8px' }}>Phone</div>
             <a href="tel:7178600163" style={{
               fontSize: '15px',
               color: 'var(--amber)',
@@ -298,7 +234,7 @@ export default function Contact() {
             borderTop: '1px solid var(--rule)',
             paddingTop: '32px',
           }}>
-            <div style={labelStyle}>Hours</div>
+            <div style={{ fontSize: '10px', letterSpacing: '.1em', color: 'var(--gun)', textTransform: 'uppercase', marginBottom: '12px' }}>Hours</div>
             <div style={{ fontSize: '14px', color: 'var(--gun)', lineHeight: '1.8' }}>
               By appointment only.<br />
               We'll work around your schedule.

@@ -2,6 +2,12 @@ const {onRequest} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const md5 = require("md5");
+const {
+  DEPARTMENTS,
+  FINDER_TABS,
+  decodeHtml,
+  getDepartmentId,
+} = require("./shopDepartments.cjs");
 
 const cscSid = defineSecret("CSC_SID");
 const cscToken = defineSecret("CSC_TOKEN");
@@ -122,6 +128,46 @@ const parseCategoryPath = (raw) => {
     sub: parts.slice(1).join(" / "),
     full: parts.join(" / "),
   };
+};
+
+const decorateItem = (item) => {
+  const parent = decodeHtml(item.parent_category);
+  const sub = decodeHtml(item.sub_category);
+  return {
+    ...item,
+    parent_category: parent,
+    sub_category: sub,
+    category: decodeHtml(item.category),
+    department: getDepartmentId(parent, sub),
+  };
+};
+
+const buildDepartmentCounts = (items) => {
+  const counts = {};
+  for (const dept of DEPARTMENTS) {
+    counts[dept.id] = 0;
+  }
+  for (const item of items) {
+    counts[item.department] = (counts[item.department] || 0) + 1;
+  }
+  return counts;
+};
+
+const buildFilterOptions = (items) => ({
+  subcategories: [
+    ...new Set(items.map((i) => i.parent_category).filter(Boolean)),
+  ].sort(),
+  manufacturers: [
+    ...new Set(items.map((i) => i.manufacturer).filter(Boolean)),
+  ].sort(),
+});
+
+const matchesFinder = (item, finderId) => {
+  const tab = FINDER_TABS.find((entry) => entry.id === finderId);
+  if (!tab) {
+    return true;
+  }
+  return tab.departments.includes(item.department);
 };
 
 const buildCategoryTree = (items) => {
@@ -393,14 +439,28 @@ exports.getProducts = onRequest(
           allItems = await getCatalog(sid, token);
         }
 
+        const catalog = allItems.map(decorateItem);
+
         const page = parseInt(req.query.page) || 1;
         const perPage = parseInt(req.query.per_page) || 24;
         const parent = req.query.parent || "";
         const subcategory = req.query.subcategory || "";
         const search = req.query.search || "";
         const manufacturer = req.query.manufacturer || "";
+        const department = req.query.department || "";
+        const finder = req.query.finder || "";
 
-        let filtered = allItems;
+        let filtered = catalog;
+
+        if (department) {
+          filtered = filtered.filter(
+              (i) => i.department === department,
+          );
+        }
+
+        if (finder) {
+          filtered = filtered.filter((i) => matchesFinder(i, finder));
+        }
 
         if (parent) {
           filtered = filtered.filter(
@@ -434,17 +494,31 @@ exports.getProducts = onRequest(
         const start = (page - 1) * perPage;
         const pageItems = filtered.slice(start, start + perPage);
 
-        const categoryTree = buildCategoryTree(allItems);
+        const categoryTree = buildCategoryTree(catalog);
         const parentCategories = Object.keys(categoryTree).sort();
         const manufacturers = [
-          ...new Set(allItems.map((i) => i.manufacturer).filter(Boolean)),
+          ...new Set(catalog.map((i) => i.manufacturer).filter(Boolean)),
         ].sort();
+        const scope = department || finder ?
+          catalog.filter((i) => {
+            if (department && i.department !== department) {
+              return false;
+            }
+            if (finder && !matchesFinder(i, finder)) {
+              return false;
+            }
+            return true;
+          }) :
+          catalog;
 
         res.status(200).json({
           pagination: {page, per_page: perPage, page_count: pageCount, total},
           parent_categories: parentCategories,
           category_tree: categoryTree,
           manufacturers,
+          departments: DEPARTMENTS,
+          department_counts: buildDepartmentCounts(catalog),
+          filter_options: buildFilterOptions(scope),
           items: pageItems,
         });
       } catch (error) {
@@ -489,3 +563,4 @@ exports.getAccessories = onRequest(
       }
     },
 );
+
