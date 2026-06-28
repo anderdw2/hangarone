@@ -199,6 +199,9 @@ const getPrice = (item) => {
   if (map > 0 && retail > 0) {
     return (((map + retail) / 2) * 0.95).toFixed(2);
   }
+  if (retail > 0) {
+    return retail.toFixed(2);
+  }
   return price.toFixed(2);
 };
 
@@ -563,4 +566,3 @@ exports.getAccessories = onRequest(
       }
     },
 );
-
