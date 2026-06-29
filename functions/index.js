@@ -11,7 +11,12 @@ const {
 
 const cscSid = defineSecret("CSC_SID");
 const cscToken = defineSecret("CSC_TOKEN");
+const northPrivateKey = defineSecret("NORTH_PRIVATE_KEY");
+const northCheckoutId = defineSecret("NORTH_CHECKOUT_ID");
+const northProfileId = defineSecret("NORTH_PROFILE_ID");
+
 const BASE_URL = "https://api.chattanoogashooting.com/rest/v6";
+const NORTH_SESSION_URL = "https://checkout.north.com/api/sessions";
 
 const CACHE_TTL_MS = 4 * 60 * 60 * 1000;
 const CACHE_PATH = "cache/csc-products-v2.json";
@@ -562,6 +567,75 @@ exports.getAccessories = onRequest(
         }
         res.status(200).json(JSON.parse(text));
       } catch (error) {
+        res.status(500).json({error: error.message});
+      }
+    },
+);
+
+exports.createCheckoutSession = onRequest(
+    {
+      secrets: [northPrivateKey, northCheckoutId, northProfileId],
+      cors: true,
+      invoker: "public",
+    },
+    async (req, res) => {
+      if (req.method === "OPTIONS") {
+        res.status(204).send("");
+        return;
+      }
+      if (req.method !== "POST") {
+        res.status(405).json({error: "Method not allowed"});
+        return;
+      }
+      try {
+        const {products, orderInfo} = req.body;
+        if (!products || !products.length) {
+          res.status(400).json({error: "Products are required"});
+          return;
+        }
+
+        // Save order info to Firestore for reference
+        const db = initAdmin().firestore();
+        const orderRef = await db.collection("pending_orders").add({
+          products,
+          orderInfo,
+          createdAt: new Date().toISOString(),
+          status: "pending_payment",
+        });
+
+        const response = await fetch(NORTH_SESSION_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${northPrivateKey.value()}`,
+          },
+          body: JSON.stringify({
+            checkoutId: northCheckoutId.value(),
+            profileId: northProfileId.value(),
+            products,
+            metadata: {
+              orderId: orderRef.id,
+              isFirearm: orderInfo?.isFirearm || false,
+              customerName: orderInfo?.name || "",
+              customerEmail: orderInfo?.email || "",
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          console.error("North session error:", error);
+          res.status(response.status).json(error);
+          return;
+        }
+
+        const session = await response.json();
+        res.status(200).json({
+          ...session,
+          orderId: orderRef.id,
+        });
+      } catch (error) {
+        console.error("Checkout session error:", error);
         res.status(500).json({error: error.message});
       }
     },

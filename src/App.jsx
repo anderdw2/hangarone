@@ -1,5 +1,6 @@
 import './styles/globals.css'
 import { Routes, Route } from 'react-router-dom'
+import { CartProvider } from './lib/cart'
 import Nav from './components/Nav.jsx'
 import Home from './pages/Home.jsx'
 import Shop from './pages/Shop.jsx'
@@ -11,7 +12,7 @@ import ProductSearch from './pages/ProductSearch.jsx'
 
 export default function App() {
   return (
-    <>
+    <CartProvider>
       <Nav />
       <div className="page-content">
         <Routes>
@@ -24,6 +25,6 @@ export default function App() {
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </div>
-    </>
+    </CartProvider>
   )
 }
